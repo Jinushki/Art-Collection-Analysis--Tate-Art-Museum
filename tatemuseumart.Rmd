@@ -1,0 +1,311 @@
+---
+title: "Tate Art Collection"
+author: "Jinushki Saluwadana - AS2018317"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<center>
+
+# A Brisk Walk Through the Art Collection History of Tate Art Museum
+
+</center>
+
+![](https://github.com/rfordatascience/tidytuesday/raw/master/data/2021/2021-01-12/preview.png)
+
+<center>*Figure 1: Tate Art Museum*</center>
+
+**Tate** is an institution that houses, in a network of four art galleries, the United Kingdom's national collection of British art, and international modern and contemporary art. It is not a government institution, but its main sponsor is the UK Department for Digital, Culture, Media and Sport.
+
+The name "Tate" is used also as the operating name for the corporate body, which was established by the Museums and Galleries Act 1992 as "The Board of Trustees of the Tate Gallery".
+
+The gallery was founded in 1897 as the **National Gallery of British Art.** When its role was changed to include the national collection of modern art as well as the national collection of British art, in 1932, it was renamed the **Tate Gallery** after sugar magnate Henry Tate of Tate & Lyle, who had laid the foundations for the collection. The Tate Gallery was housed in the current building occupied by Tate Britain, which is situated in Millbank, London. In 2000, the Tate Gallery transformed itself into the current-day Tate, which consists of a network of four museums:
+
+Tate Britain, which displays the collection of British art from 1500 to the present day; Tate Modern, also in London, which houses the Tate's collection of British and international modern and contemporary art from 1900 to the present day; Tate Liverpool (founded in 1988), which has the same purpose as Tate Modern but on a smaller scale; and Tate St Ives in Cornwall (founded in 1993), which displays modern and contemporary art by artists who have connections with the area. All four museums share the Tate Collection. One of the Tate's most publicised art events is the awarding of the annual Turner Prize, which takes place at Tate Britain every other year (taking place at venues outside of London in alternate years).
+
+## Exploratory Data Analysis
+
+This study is based on secondary data that comes from the [Tate Art Museum](https://www.tate.org.uk/). The dataset consists of the details of 69201 artworks from 1823 to 2014 that Tate owns or jointly owns with the National Galleries of Scotland as part of ARTIST ROOMS.
+
+The variables considered in the study are artist, title, medium, creation year, acquisition year, width and height. All the computations have been performed mainly using the statistical programming language R.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+library(skimr)
+library(tidyverse)
+
+artwork <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-12/artwork.csv')
+#artists <- readr::read_csv("https://github.com/tategallery/collection/raw/master/artist_data.csv")
+
+#artwork <- tuesdata$artwork
+#View(artwork)
+
+#Removing Unwanted Columns
+
+drop <- c("id","accession_number", "artistRole", "artistId", "dateText", "creditLine", "units", "depth" ,"dimensions", "inscription", "thumbnailCopyright", "thumbnailUrl", "url")
+artwork_rem <- artwork[ , !(names(artwork) %in% drop)]
+
+#View(artwork_rem)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#summary(artwork_rem)
+#str(artwork_rem)
+skim(artwork_rem)
+```
+
+<center>*Figure 2: Data Composition*</center>
+
+According to *Figure 2*, threee qualitative variables and four quantitative variables can be identified among the 7 variables as follows:
+
+| Qualitative Variables | Quantitative Variables |
+|-----------------------|------------------------|
+| artist                | creation year          |
+| title                 | acquisition year       |
+| medium                | width                  |
+|                       | height                 |
+
+<center>*Table 1: Quantitative and Qualitative Variables*</center>
+
+Based on *figure 2,* there are a considerable number of missing values in the variables chosen except for the variables 'artist' and 'title'. But since enough data points are available ccomparing to the number of missing values (even the complete rate of each variable is higher than 0.9), it is decided to remove the missing values before the data analysis. The total number of observations after data cleansing is 55328 (80%).
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+artwork_new <- artwork_rem[complete.cases(artwork_rem), ]
+#View(artwork_new)
+```
+
+### Composition
+
+This section is mainly based on the composition of the art collection of Tate Art Museum until 2014. The composition is considered based on the following categories.\
+
+#### 1. Artists
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,out.width="90%"}
+
+library(ggplot2)
+library(patchwork)
+library(plotly)
+
+artist_count <- table(artwork_new$artist)
+df1 <- as.data.frame(artist_count)
+#df1$group <- floor((df1$Freq - min(df1$Freq)) / 100) + 1
+
+#library(Hmisc)
+#artwork_group <- cut2(df1$Freq, c(100,200,300,400,500))
+#table(artwork_group)
+
+#View(df1)
+A2 <- df1 %>% filter(Freq != 31948 ) %>% ggplot(aes(x=Var1, y=Freq, size = Freq)) + geom_point(alpha=0.5,color="forestgreen") + theme(axis.title.x=element_blank(),
+    axis.text.x=element_blank(),
+    axis.ticks.x=element_blank()) + 
+  labs(y = "Count of Artworks")
+
+#A2 <- ggplotly(A2)
+
+A1 <-ggplot(df1, aes(x="", y=Freq)) + geom_boxplot(outlier.colour="red", outlier.shape=8,outlier.size=4) + labs(y = "Count of Artworks") + coord_flip()
+
+
+
+A1 + A2
+
+```
+
+<center>*Figure 3: Distribution of the Number of Artworks by Each Artist*</center>
+
+As per *Figure 3*, an extreme case can be identified which turns out that there is a large chunk of collection from the same artist. Most of other artists have contributed to the collection by providing number of artworks below 200 by each while 200-650 number of artworks were collected from each of a very few artists.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+sort(artist_count, decreasing = T)[1:7]
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+sort(table(artwork_new$artist), decreasing = T)[1] / sum(table(artwork_new$artist))
+```
+
+<center>*Figure 4: Top Artists and Proportion of Artworks by* William Turner</center>
+
+Given the above figure, William Turner tops the table making up 58% of the total art collection. Henry Moore has been the artist that has 2nd highest number of artworks in Tate art collection.
+
+#### 2. Medium
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, out.width="90%"}
+ 
+medium_count <-sort(table(artwork_new$medium), decreasing = T)[1:10]
+
+df2 <- as.data.frame(medium_count)
+#View(df2)
+
+ggplot(data=df2, aes(x=Var1, y=Freq)) +
+  geom_bar(stat="identity", fill="steelblue") + ylab("Artwork Count") +
+    xlab("Medium") + coord_flip()
+```
+
+<center>*Figure 5: Number of Artworks by Medium*</center>
+
+According to Figure 5, popular medium for artworks have been "Graphite on Paper" recording a huge difference with other mediums.
+
+#### 3. Year of Creation
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+created_count <-sort(table(artwork_new$year), decreasing = T)
+
+df4 <- as.data.frame(created_count)
+#View(df4) 
+
+library(lubridate)
+yr1 <- as.Date(as.character(df4$Var1), format = "%Y")
+df4$Var1 <- year(yr1)
+
+ggplot(data=df4, aes(x=Var1, y=Freq, group=1)) +
+  geom_line() + 
+  labs(x = "Year of Creation", y = "Count of Artworks")
+
+```
+
+<center>*Figure 6: Artwork by Year of Creation*</center>
+
+It seems that the museum favors more towards artworks created during early 18's. Also Tate has shown interest towards artworks created during the latter half of the 20th century.
+
+#### 4. Width
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(artwork_new) +
+geom_histogram(aes(x = width),color="grey",fill="forestgreen")+ xlim(0,3000) + xlab("Width in mm") + ylab("Artwork Count")
+```
+
+<center>*Figure 7: Distribution of Artworks by Width*</center>
+
+#### 5. Height
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(artwork_new) +
+geom_histogram(aes(x = height),color="grey", fill="steelblue")+ xlim(0,3500) + xlab("Height in mm") + ylab("Artwork Count")
+```
+
+<center>*Figure 8: Distribution of Artworks by Height*</center>
+
+Width and Height of the artworks distribute in the same way where most of the artworks fall within the range of 0-1500mm.
+
+#### 6. Aspect Ratio (Height/Width)
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+artwork_new$aspectratio <- artwork_new$height / artwork_new$width
+
+ggplot(artwork_new) +
+  geom_histogram(aes(x = aspectratio),color="grey",fill="forestgreen") + xlim(0,6) + xlab("Aspect Ratio in Sq.mm") + geom_vline(xintercept = 1.6180) + ylab("Artwork Count")
+```
+
+<center>*Figure 9: Distribution of Artworks by Aspect Ratio*</center>
+
+It can be seen that there is a lower amount of square shaped arts comparing to the nearby ratios. Also the aspect ratio of most of the artworks distribute around the golden ratio(1.618) as depicted in *Figure 9*.
+
+### Evolution of Art Preferences over Years
+
+This section shows how the preferences of art collection have changed over the years.
+
+#### 1. Acquired Amount
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+acquired_count <-sort(table(artwork_new$acquisitionYear), decreasing = T)
+
+df3 <- as.data.frame(acquired_count)
+#View(df3) 
+
+library(lubridate)
+yr <- as.Date(as.character(df3$Var1), format = "%Y")
+df3$Var1 <- year(yr)
+
+ggplot(data=df3, aes(x=Var1, y=Freq, group=1)) +
+  geom_line() + 
+  labs(x = "Year of Acquisition", y = "Count of Artworks")
+```
+
+<center>*Figure 10: Acquired Amount of Artworks by Year*</center>
+
+According to Figure 10, there is a significant amount of art acquisitions in between the years 1850-1875. Apart from that. there is no any significance in the art acquisition rate.
+
+#### 2.**Year of Artwork Creation versus Year Acquired by Tate Gallery**
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+artwork_new$acquired_period <- cut(artwork_new$acquisitionYear, breaks = c(1800, 1850, 1900, 1950, 2000, 2050),labels = c("1800-1849", "1850-1899", "1900-1949", "1950-1999", "2000-2050"), include.lowest = TRUE)
+#View(artwork_new)
+
+ggplot(artwork_new, aes(year)) +
+  geom_histogram(aes(alpha = acquired_period), fill = "forestgreen", bins = 50) +
+  labs(alpha = "Year Artwork Acquired", x = "Year of Artwork Creation", y = "Count of Artworks") 
+```
+
+<center>*Figure 11: Year of Artwork Creation versus Year Acquired by Tate Gallery*</center>
+
+As per *Figure 11*, it appears that the majority of artworks that were created in the early 19th Century were also acquired in the same period, with relatively few 19th century artworks being acquired in periods later than this. Similarly, artworks created in the mid-20th Century were also acquired in the same time period.
+
+#### 3. Aspect Ratio
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+artwork_new$aspectratio <- artwork_new$height / artwork_new$width
+
+ggplot(artwork_new) +
+  geom_point(aes(acquisitionYear, aspectratio),colour = "steelblue") +
+  labs(x = "Year Artwork Acquired", y = "Aspect Ratio") + theme_bw()
+```
+
+<center>*Figure 12: Aspect Ratio by Acquisition Year*</center>
+
+According to above figure, the aspect ratios of artworks collected by Tate are comparatively static. That is, until \~1950s, where the aspect ratios of some artworks changes dramatically.
+
+Also, an extreme case has been identified with an aspect ratio of \> 3000.
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+#artworks_ar <- artworks_ar[order(artworks_ar$aspectratio),]
+
+artwork_new[artwork_new$aspectratio > 3000,]
+```
+
+![](https://www.tate-images.com/media/t07064-i-from-i-Dawn-diameter-1-x-3750.jpg)
+
+<center>*Figure 13: Artwork of* Balka in 1995</center>
+
+It is evident that this is in fact a real artwork created by Balka in 1995, according to Tate Gallery. (Source: [Tate Gallery](https://www.tate-images.com/preview.asp?image=T07064))
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+
+artwork_new %>% filter(aspectratio != 3750) %>% ggplot(aes(x=acquisitionYear, y=aspectratio)) + geom_point(colour = "forestgreen") + geom_hline(yintercept = 1.6180) +
+  labs(x = "Year Artwork Acquired", y = "Aspect Ratio") 
+
+```
+
+<center>*Figure 14: Aspect Ratio by Acquisition Year (Except the extreme case)*</center>
+
+It is observable that without the extreme case, the museum has preferred in collecting artworks which follows the golden aspect ratio but after around 1950, its preferences have changed.
+
+#### 4. Medium
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+artwork_new %>%
+  count(year,medium=fct_lump(medium,5)) %>%
+  ggplot(aes(year,n, fill = medium)) +
+  geom_area(alpha= 0.5) + theme(legend.position="bottom")  + 
+  labs(x="Acquisition Year",y = "Count of Artworks") 
+
+
+```
+
+<center>*Figure 14: Medium by Acquisition Year*</center>
+
+Though the museum was more interested towards 'Graphite on Paper' during 1750-1850, it has dramatically changed to other mediums over time. Recently there has been a preference growing towards mediums such as lithograph and screen print on paper. It also depicts a growing preference towards artworks created using other mediums .
+
+## Conclusions
+
+-   Considering the composition of artworks collected by Tate so far, nearly 58% of its artworks were from a single Artist named William Turner. Also the most popular medium has been 'graphite on paper' and most of the artworks acquired follows golden Aspect Ratio.
+
+-   Apart from the years between 1850-1875, Tate has kept its acquisition rate below 5000 artworks per year.
+
+-   There is a growing trend towards acquiring artworks that are deviated from the golden ratio.
+
+-   Though Tate has more artworks that are made out of " Graphit on Paper', it tends to collect artworks recently from different other mediums.
